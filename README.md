@@ -2,7 +2,7 @@ nplus
 =====
 
 ```
-$nplus tasks
+$ nplus tasks
 JOB                                          TASK              ASTATUS   TSTATE   TFAILED  JTYPE    ADDR                         ALLOCID   NODEID
 ci-build-image/dispatch-1512599428-7e364f7a  ci-build-image    complete  dead     false    batch                                 760573ef  2fc75e14
 ci-build-image/dispatch-1512598651-3b83b6b1  ci-build-image    complete  dead     false    batch                                 26012921  2fc75e14
