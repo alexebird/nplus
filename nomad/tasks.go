@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alexebird/tableme/tableme"
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/fatih/color"
 	"github.com/hashicorp/nomad/api"
 )
@@ -77,30 +78,37 @@ func PrintTasksTableLong(allocs []*api.Allocation) {
 	sort.Sort(ByCreateTime(allocs))
 
 	headers := []string{
-		"JOB", "GROUP", "TASK", "ASTATUS", "TSTATE", "TFAILED", "JTYPE", "ADDR", "ALLOCID", "NODEID", "EVALID", "CREATED",
+		"ALLOC", "TASK", "JSTATUS", "ASTATUS", "TSTATE", "TFAILED", "JTYPE", "ADDR", "ALLOCID", "NODEID", "EVALID", "CREATED",
 	}
 
 	records := make([][]string, 0)
 
 	for _, alloc := range allocs {
 		allocID := alloc.ID
+		allocName := alloc.Name
 		evalID := alloc.EvalID
 		nodeID := alloc.NodeID
-		jobID := alloc.Job.ID
 		jobType := alloc.Job.Type
 		taskStates := alloc.TaskStates
+		jobStatus := alloc.Job.Status
 		clientStatus := alloc.ClientStatus
 		created := time.Unix(extractSeconds(alloc.CreateTime), extractNanoseconds(alloc.CreateTime))
+		allocTaskGroup := alloc.TaskGroup
 
 		for _, taskGroup := range alloc.Job.TaskGroups {
+			// the job lists all task groups, but we only want the taskgroup associated with this alloc.
+			if *taskGroup.Name != allocTaskGroup {
+				continue
+			}
+
 			for _, task := range taskGroup.Tasks {
 				taskState := taskStates[task.Name]
 				addr := taskAddr(alloc, task.Name)
 
 				rec := []string{
-					tableme.StringifyStringPtr(jobID),
-					tableme.StringifyStringPtr(taskGroup.Name),
-					tableme.StringifyStringPtr(&task.Name),
+					tableme.StringifyString(allocName),
+					tableme.StringifyString(task.Name),
+					tableme.StringifyStringPtr(jobStatus),
 					tableme.StringifyString(clientStatus),
 					tableme.StringifyString(taskState.State),
 					tableme.StringifyBool(taskState.Failed),
@@ -136,30 +144,40 @@ func PrintTasksTableShort(allocs []*api.Allocation) {
 	sort.Sort(ByCreateTime(allocs))
 
 	headers := []string{
-		"JOB", "TASK", "ASTATUS", "TSTATE", "TFAILED", "JTYPE", "ADDR", "ALLOCID", "NODEID",
+		"ALLOC", "TASK", "JSTATUS", "ASTATUS", "TSTATE", "TFAILED", "JTYPE", "ADDR", "ALLOCID", "NODEID",
 	}
 
 	records := make([][]string, 0)
 
 	for _, alloc := range allocs {
 		allocID := alloc.ID
+		allocName := alloc.Name
 		nodeID := alloc.NodeID
-		jobID := alloc.Job.ID
 		jobType := alloc.Job.Type
 		taskStates := alloc.TaskStates
 		clientStatus := alloc.ClientStatus
+		jobStatus := alloc.Job.Status
+		allocTaskGroup := alloc.TaskGroup
 
 		for _, taskGroup := range alloc.Job.TaskGroups {
+			// the job lists all task groups, but we only want the taskgroup associated with this alloc.
+			if *taskGroup.Name != allocTaskGroup {
+				continue
+			}
+
 			for _, task := range taskGroup.Tasks {
 				taskState := taskStates[task.Name]
-				taskFailed := colorizeTaskFailed(strconv.FormatBool(taskState.Failed))
+				failedState := taskState.Failed
+				stateState := taskState.State
+				taskFailed := colorizeTaskFailed(strconv.FormatBool(failedState))
 				addr := taskAddr(alloc, task.Name)
 
 				rec := []string{
-					tableme.StringifyStringPtr(jobID),
+					tableme.StringifyString(allocName),
 					tableme.StringifyString(task.Name),
+					tableme.StringifyStringPtr(jobStatus),
 					tableme.StringifyString(clientStatus),
-					tableme.StringifyString(taskState.State),
+					tableme.StringifyString(stateState),
 					tableme.StringifyString(taskFailed),
 					tableme.StringifyStringPtr(jobType),
 					tableme.StringifyStringPtr(&addr),
