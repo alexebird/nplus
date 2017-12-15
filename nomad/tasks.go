@@ -3,7 +3,6 @@ package nomad
 import (
 	"fmt"
 	"math"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -125,10 +124,8 @@ func PrintTasksTableLong(allocs []*api.Allocation) {
 		}
 	}
 
-	err := tableme.TableMe(headers, records)
-	if err != nil {
-		os.Exit(1)
-	}
+	bites := tableme.TableMe(headers, records)
+	printColorized(bites)
 }
 
 func colorizeTaskFailed(str string) string {
@@ -169,7 +166,7 @@ func PrintTasksTableShort(allocs []*api.Allocation) {
 				taskState := taskStates[task.Name]
 				failedState := taskState.Failed
 				stateState := taskState.State
-				taskFailed := colorizeTaskFailed(strconv.FormatBool(failedState))
+				taskFailed := strconv.FormatBool(failedState)
 				addr := taskAddr(alloc, task.Name)
 
 				rec := []string{
@@ -190,8 +187,22 @@ func PrintTasksTableShort(allocs []*api.Allocation) {
 		}
 	}
 
-	err := tableme.TableMe(headers, records)
-	if err != nil {
-		os.Exit(1)
+	bites := tableme.TableMe(headers, records)
+	printColorized(bites)
+}
+
+func printColorized(bites []byte) {
+	colorRules := []*tableme.ColorRule{
+		&tableme.ColorRule{
+			Pattern: `failed`,
+			Color:   "red",
+		},
+		&tableme.ColorRule{
+			Pattern: `true`,
+			Color:   "red",
+		},
 	}
+
+	colored := tableme.Colorize(bites, colorRules)
+	fmt.Print(colored.String())
 }
