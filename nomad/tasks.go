@@ -164,6 +164,22 @@ func PrintTasksTableShort(allocs []*api.Allocation) {
 
 			for _, task := range taskGroup.Tasks {
 				taskState := taskStates[task.Name]
+				// TODO error while running against a task i just started
+				//panic: runtime error: invalid memory address or nil pointer dereference
+				//[signal SIGSEGV: segmentation violation code=0x1 addr=0x10 pc=0x6b92d2]
+				//goroutine 1 [running]:
+				//github.com/alexebird/nplus/nomad.PrintTasksTableShort(0xc42029c400, 0x1e, 0x20)
+				///home/bird/go/src/github.com/alexebird/nplus/nomad/tasks.go:167 +0x252
+				//github.com/alexebird/nplus/cli.tasksCliAction(0xc4200a2b00)
+				///home/bird/go/src/github.com/alexebird/nplus/cli/tasks.go:26 +0x17a
+				//github.com/urfave/cli.HandleAction(0x73c1c0, 0x7db0d8, 0xc4200a2b00, 0xc420062300, 0x0)
+				///home/bird/go/src/github.com/urfave/cli/app.go:504 +0x7c
+				//github.com/urfave/cli.Command.Run(0x7c51cf, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, ...)
+				///home/bird/go/src/github.com/urfave/cli/command.go:228 +0xee1
+				//github.com/urfave/cli.(*App).Run(0xc4200fe000, 0xc42000c060, 0x2, 0x2, 0x0, 0x0)
+				///home/bird/go/src/github.com/urfave/cli/app.go:259 +0x740
+				//main.main()
+				///home/bird/go/src/github.com/alexebird/nplus/main.go:19 +0x370
 				failedState := taskState.Failed
 				stateState := taskState.State
 				taskFailed := strconv.FormatBool(failedState)
@@ -200,6 +216,10 @@ func printColorized(bites []byte) {
 		&tableme.ColorRule{
 			Pattern: `true`,
 			Color:   "red",
+		},
+		&tableme.ColorRule{
+			Pattern: `pending`,
+			Color:   "yellow",
 		},
 	}
 
